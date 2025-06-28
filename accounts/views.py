@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from .serializers import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserDetailsSerializer
 
 class SignupView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -14,14 +16,21 @@ class SignupView(generics.CreateAPIView):
 class LoginView(TokenObtainPairView):
     permission_classes = (AllowAny,)
 
-    class LogoutView(generics.GenericAPIView):
-        permission_classes = (IsAuthenticated,)
+class LogoutView(generics.GenericAPIView):
+    permission_classes = (IsAuthenticated,)
 
-        def post(self, request):
-            try:
-                refresh_token = request.data["refresh"]
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-                return Response(status=status.HTTP_205_RESET_CONTENT)
-            except Exception as e:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+class UserDetailsView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserDetailsSerializer
+
+    def get_object(self):
+        return self.request.user
